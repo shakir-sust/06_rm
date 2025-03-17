@@ -3,6 +3,16 @@ title: "Repeated measure"
 format: html
 ---
 
+To complete this exercise, you will need to watch (and code along with) the following repeated measure video:
+
+- repeated measure lecture: https://youtu.be/-ANqcQhB--A?si=7YeeYqDgcLsj5erW&t=4268 (starts at 01:11:08, watch till the end, about 50 min)
+
+- repeated measure lab part 1: https://youtu.be/GY2e-9M5bFM?si=TIw5F4EF2m9Dx5uK (watch full video, ~1h 50 min)  
+
+- repeated measure lab part 2: https://youtu.be/F3vg89ymLeM?si=Zv-RPIdS8mig4EMb
+(watch full video, ~2h)
+
+
 # Learning objectives  
 Today's learning objectives are to:  
 - Fit different repeated measure correlation structures to a split-plot RCBD design  
@@ -346,7 +356,9 @@ The general correlation matrix model consumed **6 more dfs** than the default mo
 This model **decreased AIC** but **increased BIC** compared to the default model. Here's an interesting case where the different metrics do not agree.  
 
 # Model 4 - Autoregressive order 1 (AR1)  
+
 ```{r}
+
 mod4_ar1 <- lme(
   yield_kgha ~ krate_kgha*nrate_kgha*fdap,
   random = ~ 1|block/krate_kgha/nrate_kgha,
@@ -354,7 +366,9 @@ mod4_ar1 <- lme(
   data = rm_rcbd_df)
 
 mod4_ar1
+
 ```
+
 Notice how we have a **phi** estimate above, which is the estimated correlation parameter.  
 
 In this case, it was estimated as zero.
