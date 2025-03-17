@@ -323,17 +323,24 @@ Although smaller compared to the default model, autocorrelation at lag = 1 is ju
 
 ## interval on rho  
 ```{r}
+
 intervals(mod3_gen, which = "var-cov")
+
 ```
 Unable to calculate intervals on correlation coefficients. 
 
 ## comparison  
+
 Let's compare all three models.  
+
 ```{r}
+
 anova(mod1_default, 
       mod2_cs,
       mod3_gen)
+
 ```
+
 The general correlation matrix model consumed **6 more dfs** than the default model (to estimate those correlation coefficients we saw above). 
 
 This model **decreased AIC** but **increased BIC** compared to the default model. Here's an interesting case where the different metrics do not agree.  
