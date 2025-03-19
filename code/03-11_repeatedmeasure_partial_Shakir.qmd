@@ -360,9 +360,9 @@ This model **decreased AIC** but **increased BIC** compared to the default model
 ```{r}
 
 mod4_ar1 <- lme(
-  yield_kgha ~ krate_kgha*nrate_kgha*fdap,
-  random = ~ 1|block/krate_kgha/nrate_kgha,
-
+  yield_kgha ~ krate_kgha*nrate_kgha*fdap, #fixed effect
+  random = ~ 1|block/krate_kgha/nrate_kgha, #In the random effect, we specify every term except fdap; fdap goes into the residual
+  correlation = corAR1(form = ~ dap), #Note that we are specifying (form = ~ dap) and not (form = ~ fdap); in the "form = ~" argument, we must specify the numeric rm variable "dap", not the factor/categorical rm variable "fdap" #In this case, corAR1 and corCAR1 [corCAR1 = continuous auto regressive; accomodates not equally spaced dates e.g., 0, 5, 7, 10 days in repeated measures] are equivalent; 
   data = rm_rcbd_df)
 
 mod4_ar1
@@ -374,11 +374,12 @@ Notice how we have a **phi** estimate above, which is the estimated correlation 
 In this case, it was estimated as zero.
 
 ## empirical autocorrelation function  
+
 ```{r}
 ACF(mod4_ar1, resType = "n") %>%
   plot(alpha = 0.01)
 ```
-Autocorrelation at lags = 1 and 2 are still significant.
+Autocorrelation at lags = 1 and 2 are still significant. [not significant at lag 3]
 
 ## intervals  
 ```{r}
@@ -386,7 +387,8 @@ intervals(mod4_ar1, which = "var-cov")
 ```
 Unable to calculate confidence interval for the estimate of correlation, likely because the estimate was 0.  
 
-## comparison
+## comparison  
+
 ```{r}
 anova(mod1_default, 
       mod2_cs, mod3_gen, mod4_ar1)
@@ -394,16 +396,23 @@ anova(mod1_default,
 AR1 model had the same dfs and fit metrics as the CS model.  
   
 # Model 5 - Autoregressive order moving average (ARMA11)  
+
+
 ```{r}
 mod5_arma11 <- lme(
   yield_kgha ~ krate_kgha*nrate_kgha*fdap,
   random = ~ 1|block/krate_kgha/nrate_kgha,
+  correlation = corARMA(p = 1, q = 1),
 
   data = rm_rcbd_df)
 
 mod5_arma11
 ```
 Notice how we have a **phi1** and **theta1** estimates above, which are the estimated correlation parameters for this model.  
+
+The Correlation Structure has two parts: 
+1) Phi1: estimate of correlation for auto-regressive part of the model 
+2) Theta1: estimate of correlation for the moving average part of the model 
 
 ## empirical autocorrelation function  
 ```{r}
@@ -416,7 +425,7 @@ Autocorrelation at lags = 1 and 2 are still significant.
 ```{r}
 intervals(mod5_arma11, which = "var-cov")
 ```
-Both estimate intervals include zero, so not significant.  
+Both estimate intervals include zero, so not significant. [from 0]
 
 ## comparison
 ```{r}
@@ -426,13 +435,14 @@ anova(mod1_default,
 ARMA11 consumed 1 more df and overall increased AIC and BIC (poorer fit).  
 
 # Model 6 - Exponential  
+
 Let's fit our first **spatial** correlation structure.  
 
 ```{r}
 mod6_exp <- lme(
   yield_kgha ~ krate_kgha*nrate_kgha*fdap,
   random = ~ 1|block/krate_kgha/nrate_kgha,
-
+  correlation = corExp(form = ~ dap),
   data = rm_rcbd_df)
 
 mod6_exp
@@ -440,10 +450,12 @@ mod6_exp
 Notice how we have a **range** estimate above, which is the estimated correlation parameter for spatial models.  
 
 ## empirical autocorrelation function  
+
 ```{r}
 ACF(mod6_exp, resType = "n") %>%
   plot(alpha = 0.01)
 ```
+
 Lags 1 and 2 still correlated.  
 
 With spatial correlation structures, we can obtain the semivariogram to inspect model fit.  
@@ -455,7 +467,7 @@ Variogram(mod6_exp) %>%
 ```
 A few things to notice:  
   - We only have 4 time points, which creates 3 distances on the semivariogram.  
-  - Having only 3 distances makes it **very difficult to fit a semivariogram** of any sort, and that's what we see above.  
+  - Having only 3 distances makes it **very difficult to fit a semivariogram** of any sort, and that's what we see above (i.e., no line for exponential curve).  
   - The actual exponential line is not even appearing in the plot (i.e., it did not fit the data)  
   - Based on this, I would not expect for this model to perform well in our data.  
   
@@ -464,7 +476,7 @@ A few things to notice:
 ```{r}
 intervals(mod6_exp, which = "var-cov")
 ```
-range interval does not include 0, so it is significant.
+range interval does not include 0, so it is significant (significantly different from 0).
 
 ## comparison
 ```{r}
@@ -481,7 +493,7 @@ Thus, our best candidate remains model 3 (general).
 mod7_gaus <- lme(
   yield_kgha ~ krate_kgha*nrate_kgha*fdap,
   random = ~ 1|block/krate_kgha/nrate_kgha,
-
+  correlation = corGaus(form = ~ dap),
   data = rm_rcbd_df)
 
 mod7_gaus
@@ -523,6 +535,7 @@ Thus, our best candidate remains model 3 (general).
 mod8_lin <- lme(
   yield_kgha ~ krate_kgha*nrate_kgha*fdap,
   random = ~ 1|block/krate_kgha/nrate_kgha,
+  correlation = corLin(form = ~ dap),
 
   data = rm_rcbd_df)
 
@@ -567,7 +580,7 @@ Thus, our best candidate remains model 3 (general).
 mod9_rq <- lme(
   yield_kgha ~ krate_kgha*nrate_kgha*fdap,
   random = ~ 1|block/krate_kgha/nrate_kgha,
-
+  correlation = corRatio(form = ~ dap),
   data = rm_rcbd_df)
 
 mod9_rq
@@ -610,7 +623,7 @@ Thus, our best candidate remains model 3 (general).
 mod10_sph <- lme(
   yield_kgha ~ krate_kgha*nrate_kgha*fdap,
   random = ~ 1|block/krate_kgha/nrate_kgha,
-
+  correlation = corSpher(form = ~ dap),
   data = rm_rcbd_df)
 
 mod10_sph
@@ -641,7 +654,13 @@ range interval does not include 0, so it is significant.
 ```{r}
 anova(mod1_default, 
       mod2_cs, mod3_gen, mod4_ar1, mod5_arma11,
-      mod6_exp, mod7_gaus, mod8_lin, mod9_rq, mod10_sph) 
+      mod6_exp, mod7_gaus, mod8_lin, mod9_rq, mod10_sph) %>%
+  as.data.frame() %>%
+  rownames_to_column(var = "modelname") %>% #removes the row names and moves them into a column
+  janitor::clean_names() %>% #to standardize all column names as lowercase and with a dot between spaces
+  dplyr::select(modelname, model, df, aic, bic) %>% #to include the columns of interest (modelname, model, df, aic, bic)
+  arrange(aic) #%>% #to arrange/sort by AIC
+  #arrange(bic) #to arrange/sort by BIC
 
 ```
 After fitting the default model and comparing it to other 9 models that included serial and spatial correlation structures, we found that:  
@@ -656,9 +675,10 @@ At this point, our next steps will depend on the metric we decide to use:
   - If we use **AIC**, then we would select the **general model** to perform inference  
   - If we use **BIC**, then we would select the **default model** to perform inference  
   
-Let's assume that the general model was the best, and perform inference on it.  
+Let's assume that the general model (based on AIC) was the best, and perform inference on it.  
 
 # Checking residuals  
+
 ```{r}
 library(broom.mixed)
 mod3_gen_resid <- augment(mod3_gen) %>%
@@ -668,6 +688,7 @@ mod3_gen_resid
 ```
 
 ### Block random effects are iid ~ N(0,var_a)  
+
 ```{r }
 ranef(mod3_gen)[[1]] %>%
   ggplot(aes(sample=`(Intercept)`))+
