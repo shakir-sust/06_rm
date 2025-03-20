@@ -682,7 +682,9 @@ Let's assume that the general model (based on AIC) was the best, and perform inf
 ```{r}
 library(broom.mixed)
 mod3_gen_resid <- augment(mod3_gen) %>%
-  mutate(.stdresid=resid(mod3_gen, type="pearson", scaled=T))
+  mutate(.stdresid=resid(mod3_gen, 
+                         type="pearson", 
+                         scaled=T)) # resid() = Standardized residual (not studentized residual)
 
 mod3_gen_resid
 ```
@@ -690,7 +692,7 @@ mod3_gen_resid
 ### Block random effects are iid ~ N(0,var_a)  
 
 ```{r }
-ranef(mod3_gen)[[1]] %>%
+ranef(mod3_gen)[[1]] %>% #[[1]] = To return the 1st element of list generated from "ranef(mod3_gen)" i.e., (Intercept) of "Level: block" - note:run "ranef(mod3_gen)" to get the full list
   ggplot(aes(sample=`(Intercept)`))+
   stat_qq(  shape = 21,
             fill = "purple", 
@@ -704,9 +706,10 @@ ranef(mod3_gen)[[1]] %>%
 
 ```
 
-### Block:krate random effects are iid ~ N(0,var_b)  
+### Block:krate random effects are iid ~ N(0,var_b) [random effect associated with potassium rate nested within block]
+
 ```{r }
-ranef(mod3_gen)[[2]] %>%
+ranef(mod3_gen)[[2]] %>% #[[2]] = To return the 2nd element of list generated from "ranef(mod3_gen)" i.e., "Level: krate_kgha %in% block"; Note:run "ranef(mod3_gen)" to get the full list
   ggplot(aes(sample=`(Intercept)`))+
   stat_qq(  shape = 21,
             fill = "purple", 
@@ -718,11 +721,17 @@ ranef(mod3_gen)[[2]] %>%
        y = "Sample quantile")+
   theme_bw()
 
-```
+#If we run only "ranef(mod3_gen)[[2]]", we see 12 rows/obs because we have 4 blocks * 3 levels of krate = 12 obs
 
-### Block:krate:nrate random effects are iid ~ N(0,var_c)  
+```
+Nothing too worrisome.
+
+
+### Block:krate:nrate random effects are iid ~ N(0,var_c)  [random effect: nitrogen rate inside potassium rate inside block]
+
+
 ```{r }
-ranef(mod3_gen)[[3]] %>%
+ranef(mod3_gen)[[3]] %>% #[[3]] = To return the 3rd element of list generated from "ranef(mod3_gen)" i.e., "Level: nrate_kgha %in% krate_kgha %in% block"; Note: run "ranef(mod3_gen)" to get the full list
   ggplot(aes(sample=`(Intercept)`))+
   stat_qq(  shape = 21,
             fill = "purple", 
@@ -735,9 +744,13 @@ ranef(mod3_gen)[[3]] %>%
   theme_bw()
 
 ```
+
+Some slight deviations in the tail, but nothing that we need to worry about.
 
 ### Within-group errors are iid ~ N(0, var_e)  
-```{r }
+
+```{r, warning=FALSE, message=FALSE}
+
 ggplot(mod3_gen_resid, aes(x=.fitted, y=.stdresid))+
   geom_hline(yintercept = 0, color="red")+
   geom_point(shape = 21,
@@ -747,7 +760,11 @@ ggplot(mod3_gen_resid, aes(x=.fitted, y=.stdresid))+
   geom_smooth()+
   geom_hline(yintercept = c(-3,3), color = "red")+
   theme_bw()
+
 ```
+
+Nothing too worrisome: no pattern in the residuals, no residual beyond +3 or -3 so no outliers, it does not seem that the variance is increasing or decreasing along x axis. So, the assumptions for independence, homogeneous variance, and no outlier assumptions seem to hold. 
+
 
 ```{r}
 ggplot(mod3_gen_resid, aes(sample=.stdresid))+
@@ -768,14 +785,22 @@ Except for a few points on the upper tail, everything looks great.
 We can proceed with inference.  
 
 # Inference - correct model  
+
 ```{r anova}
+
 Anova(mod3_gen, type = 3)
+
 ```
+
 > Looking at the ANOVA table above, which means would you extract?  
 
+The most complex interaction i.e., 3-way interaction of krate_kgha:nrate_kgha:fdap is significant at Alpha = .001 significance level. So, we would extract means for krate_kgha:nrate_kgha:fdap.
+
 ## K x N x dap interaction  
+
 ```{r}
-rm_rcbd_cld_kndap <- emmeans(mod3_gen, ~fdap|krate_kgha:nrate_kgha) %>%
+
+rm_rcbd_cld_kndap <- emmeans(mod3_gen, ~ fdap|krate_kgha:nrate_kgha) %>% #"~fdap|krate_kgha:nrate_kgha" : to compare different days after planting (fdap) within nitrogen rate and potassium rate #Each combination of nitrogen and potassium rates and then comparing the days after planting within that combination #If we did emmeans(mod3_gen, ~ krate_kgha:nrate_kgha|fdap), we would get all combinations of nitrogen and potassium rates within each day after planting (fdap) e.g., fdap = 120; fdap = 130 etc.
   cld(reversed = T,
       Letters = letters,
       adjust = "none"
@@ -785,11 +810,13 @@ rm_rcbd_cld_kndap <- emmeans(mod3_gen, ~fdap|krate_kgha:nrate_kgha) %>%
   mutate(trtname = paste0(nrate_kgha,"+",krate_kgha))
 
 rm_rcbd_cld_kndap
+
 ```
 
 ```{r}
 #| fig-width: 15
 #| fig-height: 5
+
 ggplot(mapping = aes(fill = fdap))+
   # Raw data and boxplots  
   geom_boxplot(data = rm_rcbd_df,
@@ -812,19 +839,36 @@ ggplot(mapping = aes(fill = fdap))+
         panel.grid.minor.y = element_blank(),
         legend.position = "none")
 
+
 ```
+
+
+This letter separation boxplot just to compare the different days after planting (120 days, 130 days, 140 days, 150 days) within each combination of nitrogen and potassium rates. We cannot compare across treatments.
+
+But if our goal was to compare different treatments (i.e., combinations of nitrogen and potassium rates) [e.g., 0+0, 0+30, 0+60, 100+0, 100+30, 100+60, 200+0, 200+30, 200+60] at a particular harvest time i.e., days after planting [e.g., 120, 130, 140, 150 days after planting] [simply put, taking one day, and then comparing all treatments within it], we have to change the emmeans as *emmeans(mod3_gen, ~ krate_kgha:nrate_kgha|fdap)*, and also change how we show the data for letter separation to guide our audience how to interpret the results.  
+
 
 Now, let's assume that had used the default model instead, what would have happened?  
 
 I'm going to skip the code for checking model assumptions for the default model, but you should do it if it were for your research.  
 
 # Inference - wrong model  
+
 ```{r anova}
+
 Anova(mod1_default, type = 3)
+
 ```
+
 > Take a moment to compare this ANOVA table with that from the general model (the one we ran just prior). Do you see any differences?  
 
+Yes, for this "mod1_default" i.e., default model, the 3-way "krate_kgha:nrate_kgha:fdap" interaction is not significant at Alpha = 0.05 significance level, rather the 2-way "krate_kgha:nrate_kgha" interaction and "fdap" main effect are significant at Alpha = 0.001 significance level. Hence, we would do 2 plots: one for the 2-way "krate_kgha:nrate_kgha" interaction, and another plot/table/sentence for the "fdap" main effect (because both "krate_kgha:nrate_kgha" and "fdap"  were significant at Alpha = 0.001 significance level).
+
+
+In contrast, the "mod3_gen" i.e., general model had the 3-way "krate_kgha:nrate_kgha:fdap" interaction to be highly significant at Alpha = 0.001 significance level. 
+
 ## K x N x dap interaction  
+
 ```{r}
 rm_rcbd_cld_kndap_wrong <- emmeans(mod1_default, 
                                    ~fdap|krate_kgha:nrate_kgha) %>%
@@ -842,6 +886,7 @@ rm_rcbd_cld_kndap_wrong
 ```{r}
 #| fig-width: 15
 #| fig-height: 5
+
 ggplot(mapping = aes(fill = fdap))+
   # Raw data and boxplots  
   geom_boxplot(data = rm_rcbd_df,
@@ -867,6 +912,8 @@ ggplot(mapping = aes(fill = fdap))+
 ```
 
 Not too many differences in inference from both models when it comes to the letter display.  
+
+> Very Important Note: Repeated Measures does not impact the means, but Repeated Measures impacts the error.
 
 # Conclusions  
 Our data included a **time variable** and thus it should be analyzed using **repeated measure techniques**.
