@@ -1,6 +1,6 @@
 ---
 title: "Assignment 7 - Repeated measure"
-author: "YOUR NAME HERE"  
+author: "Md Shakir Moazzem"  
 format:
   html:
     code-fold: true 
@@ -46,9 +46,306 @@ Once you finish coding along with the videos, answer the following questions.
 # Questions  
 In class, we decided to use AIC as the metric to select the best model, and this determined the best model to be the one with a general error correlation matrix structure. If we had used BIC as the metric, then the model selected would have been the default model. Here, you are asked to use BIC and thus select the default model as the best, and perform all the steps after model selection. You may copy and paste the class script, and adapt the copied version to implement these changes.  
 
+# Setup and wrangling  
+```{r}
+#| message: false
+#| warning: false
+library(tidyverse) # for data wrangling and plotting
+library(car) # for Anova function
+library(lme4)
+library(broom) # for model residuals extraction
+library(emmeans) # for model mean extraction
+library(multcomp) # for pairwise comparison letter display
+library(nlme) # for repeated measure correlation structures 
+
+#We use "lme4" package for mixed effects ANOVA models.
+#We use "nlme" package for repeated measures ANOVA models.
+
+```
+
+Reading data and doing some light wrangling.  
+```{r}
+#| message: false
+
+#In this data frame, "dap" stands for "days after planting" with 4 levels: 120, 130, 140, 150
+
+rm_rcbd_df <- read_csv("../data/wheat_nk_balkh_rm.csv") %>%
+  mutate(across(trt:splot, ~factor(.))) %>%
+  mutate(fdap = factor(dap)) #fdap = dap as factor #because we want to have "dap" as both numeric and categorical columns
+
+#1st argument in across() function: select all columns between "trt" and "splot" #2nd argument: ~factor(.) here . is a place holder into which all selected columns (trt:splot) are passed
+
+rm_rcbd_df
+
+```
+
+Since we have been instructed to select the default model as the best model based on the BIC, I am going to skip all the intermediary steps and going straight to perform all the steps **after** model selection.
+
+# Model - Default  Model
+
+```{r}
+mod1_default <- lme(yield_kgha ~ krate_kgha*nrate_kgha*fdap, #Specifying fixed term/effect
+                    random = ~ 1 | block/krate_kgha/nrate_kgha, #Specifying random term/effect
+                    data = rm_rcbd_df #Specifying where the data is coming from
+                    )
+
+rm_rcbd_df
+
+mod1_default
+```
+
+# Model - General Model
+
+Compound symmetry is the simplest:  correlation = corCompSymm(form = ~ dap)
+General is the most complex: 
+
+```{r}
+
+mod3_gen <- lme(
+  yield_kgha ~ krate_kgha*nrate_kgha*fdap,
+  random = ~ 1|block/krate_kgha/nrate_kgha,
+  correlation = corSymm(),
+  data = rm_rcbd_df)
+
+mod3_gen
+
+```
+
+
 ## Q1: Include here the residual assessment of the default model. Include each plot and its interpretation. How do these residuals from the default model visually compare to those from the general model?  
 
+# Checking residuals for the general model  
+
+```{r residual general model}
+
+library(broom.mixed)
+
+mod3_gen_resid <- augment(mod3_gen) %>%
+  mutate(.stdresid=resid(mod3_gen, 
+                         type="pearson", 
+                         scaled=T)) # resid() = Standardized residual (not studentized residual)
+
+mod3_gen_resid
+```
+
+# Checking residuals for the default model 
+
+```{r residual default model}
+
+library(broom.mixed)
+
+mod1_default_resid <- augment(mod1_default) %>%
+  mutate(.stdresid=resid(mod1_default, 
+                         type="pearson", 
+                         scaled=T)) # resid() = Standardized residual (not studentized residual)
+
+mod1_default_resid
+```
+
+### Block random effects are iid ~ N(0,var_a)  
+
+```{r general model: Block random effects}
+ranef(mod3_gen)[[1]] %>% 
+  ggplot(aes(sample=`(Intercept)`))+
+  stat_qq(  shape = 21,
+            fill = "purple", 
+            size = 3,
+            alpha = .7
+  )+
+  stat_qq_line()+
+  labs(x = "Theoretical quantile",
+       y = "Sample quantile",
+       title = "General model: Blocks Random Effects QQ plot")+
+  theme_bw()
+
+```
+
+
+```{r default model: Block random effects}
+ranef(mod1_default)[[1]] %>% 
+  ggplot(aes(sample=`(Intercept)`))+
+  stat_qq(  shape = 21,
+            fill = "purple", 
+            size = 3,
+            alpha = .7
+  )+
+  stat_qq_line()+
+  labs(x = "Theoretical quantile",
+       y = "Sample quantile",
+       title = "Default model: Blocks Random Effects QQ plot")+
+  theme_bw()
+
+```
+
+
+### Block:krate random effects are iid ~ N(0,var_b) [random effect associated with potassium rate nested within block]
+
+```{r general model: Block:krate random effects}
+
+ranef(mod3_gen)[[2]] %>% 
+  ggplot(aes(sample=`(Intercept)`))+
+  stat_qq(  shape = 21,
+            fill = "purple", 
+            size = 3,
+            alpha = .7
+  )+
+  stat_qq_line()+
+  labs(x = "Theoretical quantile",
+       y = "Sample quantile",
+       title = "General model: Block*krate Random Effects QQ plot")+
+  theme_bw()
+
+
+```
+
+
+```{r default model: Block:krate random effects}
+ranef(mod1_default)[[2]] %>% 
+  ggplot(aes(sample=`(Intercept)`))+
+  stat_qq(  shape = 21,
+            fill = "purple", 
+            size = 3,
+            alpha = .7
+  )+
+  stat_qq_line()+
+  labs(x = "Theoretical quantile",
+       y = "Sample quantile",
+       title = "Default model: Block*krate Random Effects QQ plot")+
+  theme_bw()
+
+```
+
+### Block:krate:nrate random effects are iid ~ N(0,var_c)  [random effect: nitrogen rate inside potassium rate inside block]
+
+
+```{r general model: Block:krate:nrate Random Effects QQ plot}
+
+ranef(mod3_gen)[[3]] %>% 
+  ggplot(aes(sample=`(Intercept)`))+
+  stat_qq(  shape = 21,
+            fill = "purple", 
+            size = 3,
+            alpha = .7
+  )+
+  stat_qq_line()+
+  labs(x = "Theoretical quantile",
+       y = "Sample quantile",
+       title = "General model: Block*krate*nrate Random Effects QQ plot")+
+  theme_bw()
+
+```
+
+
+```{r default model: Block:krate:nrate random effects QQ plot}
+
+ranef(mod1_default)[[3]] %>% 
+  ggplot(aes(sample=`(Intercept)`))+
+  stat_qq(  shape = 21,
+            fill = "purple", 
+            size = 3,
+            alpha = .7
+  )+
+  stat_qq_line()+
+  labs(x = "Theoretical quantile",
+       y = "Sample quantile",
+       title = "Default model: Block*krate*nrate Random Effects QQ plot")+
+  theme_bw()
+
+```
+### Within-group errors are iid ~ N(0, var_e)  
+
+```{r general model: fitted vs. residual plot for Within-group errors, warning=FALSE, message=FALSE}
+
+ggplot(mod3_gen_resid, aes(x=.fitted, y=.stdresid))+
+  geom_hline(yintercept = 0, color="red")+
+  geom_point(shape = 21,
+             fill = "purple", 
+             size = 3,
+             alpha = .7)+
+  geom_smooth()+
+  geom_hline(yintercept = c(-3,3), color = "red")+
+  labs(y = "Standardized Residuals",
+       x = "Fitted Values",
+       title = "General model: Fitted vs. Residual Plot for Within-group Errors")+
+  theme_bw()
+
+```
+
+```{r default model: fitted vs. residual plot for Within-group errors, warning=FALSE, message=FALSE}
+
+ggplot(mod1_default_resid, aes(x=.fitted, y=.stdresid))+
+  geom_hline(yintercept = 0, color="red")+
+  geom_point(shape = 21,
+             fill = "purple", 
+             size = 3,
+             alpha = .7)+
+  geom_smooth()+
+  geom_hline(yintercept = c(-3,3), color = "red")+
+  labs(y = "Standardized Residuals",
+       x = "Fitted Values",
+       title = "Default model: Fitted vs. Residual Plot for Within-group Errors")+
+  theme_bw()
+
+```
+
+
+```{r General Model: QQ Plot for Within-group Errors, warning=FALSE, message=FALSE}
+
+ggplot(mod3_gen_resid, aes(sample=.stdresid))+
+  stat_qq(  shape = 21,
+            fill = "purple", 
+            size = 3,
+            alpha = .7
+  )+
+  stat_qq_line()+
+  labs(x = "Theoretical quantile",
+       y = "Sample quantile",
+       title = "General Model: QQ Plot for Within-group Errors")+
+  theme_bw()
+
+```
+
+```{r Default Model: QQ Plot for Within-group Errors, warning=FALSE, message=FALSE}
+
+ggplot(mod1_default_resid, aes(sample=.stdresid))+
+  stat_qq(  shape = 21,
+            fill = "purple", 
+            size = 3,
+            alpha = .7
+  )+
+  stat_qq_line()+
+  labs(x = "Theoretical quantile",
+       y = "Sample quantile",
+       title = "Default Model: QQ Plot for Within-group Errors")+
+  theme_bw()
+
+```
+
+
+
 ## Q2: Include here the ANOVA table from the default model. How does it compare with the ANOVA table from the general model?  
+
+### ANOVA Table for General Model  
+
+```{r anova general model, warning=FALSE, message=FALSE}
+
+Anova(mod3_gen, type = 3)
+
+```
+
+
+### ANOVA Table for Default Model  
+
+```{r anova default model, warning=FALSE, message=FALSE}
+
+Anova(mod1_default, type = 3)
+
+```
+
+For the "mod1_default" i.e., default model, the 3-way "krate_kgha:nrate_kgha:fdap" interaction (*p*-value = 0.06951) is not significant at Alpha = 0.05 significance level, rather the 2-way "krate_kgha:nrate_kgha" interaction (*p*-value = 1.047e-06) and the "fdap" main effect (*p*-value < 2.2e-16) are significant at Alpha = 0.001 significance level. Hence, we would mention 2 different pairwise letter separation plots/tables/interpretation paragraphs: one for the 2-way "krate_kgha:nrate_kgha" interaction, and another plot/table/interpretation paragraph for the "fdap" main effect (because both "krate_kgha:nrate_kgha" and "fdap"  were significant at Alpha = 0.001 significance level).
+
+
+In contrast, the "mod3_gen" i.e., general model had the 3-way "krate_kgha:nrate_kgha:fdap" interaction (*p*-value = 7.576e-05) to be highly significant at Alpha = 0.001 significance level. Hence, we would extract means and mention pairwise letter separation plots/tables/interpretation paragraphs either to compare different days after planting (fdap) within all combinations of nitrogen rate and potassium rates, or to compare all combinations of nitrogen and potassium rates within each day after planting (fdap).
 
 # Submitting your work  
 Once you have developed all the code and answers, make sure to Render this quarto file.  
