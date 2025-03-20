@@ -47,6 +47,8 @@ Once you finish coding along with the videos, answer the following questions.
 # Questions  
 In class, we decided to use AIC as the metric to select the best model, and this determined the best model to be the one with a general error correlation matrix structure. If we had used BIC as the metric, then the model selected would have been the default model. Here, you are asked to use BIC and thus select the default model as the best, and perform all the steps after model selection. You may copy and paste the class script, and adapt the copied version to implement these changes.  
 
+Answer: Since we have been instructed to select the default model as the best model based on the BIC, I am going to skip all the intermediary steps and going straight to perform all the steps **after** model selection.
+
 # Setup  
 
 ```{r setup, warning=FALSE, message=FALSE}
@@ -86,7 +88,6 @@ rm_rcbd_df
 
 ```
 
-Since we have been instructed to select the default model as the best model based on the BIC, I am going to skip all the intermediary steps and going straight to perform all the steps **after** model selection.
 
 # Models 
 
@@ -99,8 +100,6 @@ mod1_default <- lme(yield_kgha ~ krate_kgha*nrate_kgha*fdap, #Specifying fixed t
                     random = ~ 1 | block/krate_kgha/nrate_kgha, #Specifying random term/effect
                     data = rm_rcbd_df #Specifying where the data is coming from
                     )
-
-rm_rcbd_df
 
 mod1_default
 ```
@@ -155,6 +154,7 @@ mod1_default_resid
 ### Block random effects are iid ~ N(0,var_a)  
 
 ```{r general model: Block random effects QQ plot, warning=FALSE, message=FALSE}
+
 ranef(mod3_gen)[[1]] %>% 
   ggplot(aes(sample=`(Intercept)`))+
   stat_qq(  shape = 21,
@@ -186,6 +186,10 @@ ranef(mod1_default)[[1]] %>%
   theme_bw()
 
 ```
+
+*Interpretation:* In the QQ plot shown above, we have only 4 data points since there are only 4 blocks. Taking that into consideration, the residuals appear to fall closely around the QQ line with no strong curvature pattern and there is no huge distance from the tail points to the QQ line. Hence, the residual normality assumption for the Block random effects appear to hold.
+
+*Visual comparison of residuals between default and general model:* For the random effect associated with Block, the residuals in the QQ plot of the default model appear to be very v-e-r-y similar (if not the same) to those of the general model QQ plot.
 
 
 ### Block:krate random effects are iid ~ N(0,var_b) 
@@ -225,6 +229,11 @@ ranef(mod1_default)[[2]] %>%
 
 ```
 
+*Interpretation:* In the QQ plot for the random effect associated with potassium rates nested within blocks shown above, the residuals appear to fall closely around the QQ line with no strong curvature pattern. Although there appears to be a little bit deviations from QQ line on two tails, they are not too extreme to be worrisome. Hence, the residual normality assumption for the Block random effects appear to hold.
+
+*Visual comparison of residuals between default and general model:* For the random effects associated with potassium rates nested within blocks, the residuals in the QQ plot for the default model appear to be very v-e-r-y similar (if not the same) to those of the general model QQ plot.
+
+
 ### Block:krate:nrate random effects are iid ~ N(0,var_c)  
 
 
@@ -262,6 +271,13 @@ ranef(mod1_default)[[3]] %>%
   theme_bw()
 
 ```
+
+############??????? Work from here
+
+
+
+
+
 ### Within-group errors are iid ~ N(0, var_e)  
 
 ```{r general model: fitted vs. residual plot for Within-group errors, warning=FALSE, message=FALSE}
