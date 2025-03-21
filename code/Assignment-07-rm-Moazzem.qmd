@@ -47,7 +47,7 @@ Once you finish coding along with the videos, answer the following questions.
 # Questions  
 In class, we decided to use AIC as the metric to select the best model, and this determined the best model to be the one with a general error correlation matrix structure. If we had used BIC as the metric, then the model selected would have been the default model. Here, you are asked to use BIC and thus select the default model as the best, and perform all the steps after model selection. You may copy and paste the class script, and adapt the copied version to implement these changes.  
 
-Answer: Since we have been instructed to select the default model as the best model based on the BIC, I am going to skip all the intermediary steps and going straight to perform all the steps **after** model selection.
+***Answer:*** Since we have been instructed to select the default model as the best model based on the BIC, I am going to skip all the intermediary steps and going straight to perform all the steps **after** model selection as per the instruction given in the above question.
 
 # Setup  
 
