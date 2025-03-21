@@ -187,9 +187,9 @@ ranef(mod1_default)[[1]] %>%
 
 ```
 
-*Interpretation:* In the QQ plot shown above, we have only 4 data points since there are only 4 blocks. Taking that into consideration, the residuals appear to fall closely around the QQ line with no strong curvature pattern and there is no huge distance from the tail points to the QQ line. Hence, the residual normality assumption for the Block random effects appear to hold.
+***Interpretation:*** In the QQ plot shown above, we have only 4 data points since there are only 4 blocks. Taking that into consideration, the residuals appear to fall closely around the QQ line with no strong curvature pattern and there is no huge deviations from the tail points to the QQ line. Hence, the residual normality assumption appears to hold.
 
-*Visual comparison of residuals between default and general model:* For the random effect associated with Block, the residuals in the QQ plot of the default model appear to be very v-e-r-y similar (if not the same) to those of the general model QQ plot.
+***Visual comparison of residuals between default and general model:*** For the random effect associated with Block, the residuals in the QQ plot of the default model appear to be very v-e-r-y similar (if not the same) to those of the general model QQ plot.
 
 
 ### Block:krate random effects are iid ~ N(0,var_b) 
@@ -229,9 +229,9 @@ ranef(mod1_default)[[2]] %>%
 
 ```
 
-*Interpretation:* In the QQ plot for the random effect associated with potassium rates nested within blocks shown above, the residuals appear to fall closely around the QQ line with no strong curvature pattern. Although there appears to be a little bit deviations from QQ line on two tails, they are not too extreme to be worrisome. Hence, the residual normality assumption for the Block random effects appear to hold.
+***Interpretation:*** In the QQ plot for the random effect associated with potassium rates nested within blocks shown above, the residuals appear to fall closely around the QQ line with no strong curvature pattern. Although there appears to be slight deviations on two tails from QQ line, they are not too extreme to be worrisome. Hence, the residual normality assumption appears to hold.
 
-*Visual comparison of residuals between default and general model:* For the random effects associated with potassium rates nested within blocks, the residuals in the QQ plot for the default model appear to be very v-e-r-y similar (if not the same) to those of the general model QQ plot.
+***Visual comparison of residuals between default and general model:*** For the random effects associated with potassium rates nested within blocks, the residuals in the QQ plot for the default model appear to be very v-e-r-y similar (if not the same) to those of the general model QQ plot.
 
 
 ### Block:krate:nrate random effects are iid ~ N(0,var_c)  
@@ -272,9 +272,9 @@ ranef(mod1_default)[[3]] %>%
 
 ```
 
-############??????? Work from here
+***Interpretation:*** In the QQ plot for the random effect associated with nitrogen rates nested within potassium rates nested within blocks shown above, the residuals appear to fall closely around the QQ line with no strong curvature pattern. Although there appears to be slight deviations on two tails from QQ line , they are not too extreme to be worrisome. Hence, the residual normality assumption appears to hold.
 
-
+***Visual comparison of residuals between default and general model:*** For the random effects associated with nitrogen rates nested within potassium rates nested within blocks, the residuals in the QQ plot for the default model appear to be very v-e-r-y similar (if not the same) to those of the general model QQ plot.
 
 
 
@@ -314,6 +314,36 @@ ggplot(mod1_default_resid, aes(x=.fitted, y=.stdresid))+
 
 ```
 
+Interpretation of model assumptions:
+
+***Residual independence:***    
+
+From the fitted vs. residual plot shown above, we see:  
+
+- no clear pattern of residuals  
+- random cloud of points of residuals  
+- the error band for the smooth line comprises of 0 along the x-axis  
+
+Hence, the residual independence assumption appears to hold.  
+
+***Residual homogeneous variance/ variance homogeneity/ homoscedasticity:***
+
+From the fitted vs. residual plot shown above, we see: 
+
+- spread of residuals seems to be even along y-axis
+- spread of residuals seems constant (i.e., neither increasing nor decreasing) along x-axis
+- no clear pattern of residuals
+- random cloud of points of residuals
+- the error band for the smooth line comprises of 0 along the x-axis
+
+Hence, the residual homogeneous variance/ variance homogeneity/ homoscedasticity assumption appears to hold.  
+
+***Outlier detection:***
+
+From the fitted vs. residual plot shown above, we see that all residuals fall within [-3, 3] interval along the y-axis. Hence, there is no outlier present to skew the model interpretation.
+
+***Visual comparison of residuals between default and general model:*** For the fitted vs. residual plots shown above, the residuals in the fitted vs. residual plot for the default model appear to be very v-e-r-y similar to those of the fitted vs. residual plot for the general model.  
+
 
 ```{r General Model: QQ Plot for Within-group Errors, warning=FALSE, message=FALSE}
 
@@ -347,6 +377,11 @@ ggplot(mod1_default_resid, aes(sample=.stdresid))+
 
 ```
 
+***Residual normality:***
+
+In the QQ plot show above, the residuals fall closely around the QQ line with no strong curvature pattern. Although there appears to be very slight deviations on the upper tail from QQ line, they are not too extreme/drastic to be worrisome. Hence, the residual normality assumption appears to hold.
+
+***Visual comparison of residuals between default and general model:*** The residuals in the QQ plot for the default model appear to be similar to those of the QQ plot for the general model, although there are slight visible differences in the pattern of residuals  along their two tails from the QQ line: the residuals along the upper tail of the default model QQ plot are situated upward to the QQ line, whereas the those for the general model QQ plot are situated downward to the QQ line.
 
 
 ## Q2: Include here the ANOVA table from the default model. How does it compare with the ANOVA table from the general model?  
@@ -367,11 +402,12 @@ Anova(mod3_gen, type = 3)
 Anova(mod1_default, type = 3)
 
 ```
+***Answer:***  
 
-For the "mod1_default" i.e., default model, the 3-way "krate_kgha:nrate_kgha:fdap" interaction (*p*-value = 0.06951) is not significant at Alpha = 0.05 significance level, rather the 2-way "krate_kgha:nrate_kgha" interaction (*p*-value = 1.047e-06) and the "fdap" main effect (*p*-value < 2.2e-16) are significant at Alpha = 0.001 significance level. Hence, we would mention 2 different pairwise letter separation plots/tables/interpretation paragraphs: one for the 2-way "krate_kgha:nrate_kgha" interaction, and another plot/table/interpretation paragraph for the "fdap" main effect (because both "krate_kgha:nrate_kgha" and "fdap"  were significant at Alpha = 0.001 significance level).
+For the "mod1_default" i.e., default model, the 3-way "krate_kgha:nrate_kgha:fdap" interaction (*p*-value = 0.06951) is not significant at Alpha = 0.05 significance level, rather the 2-way "krate_kgha:nrate_kgha" interaction (*p*-value = 1.047e-06) and the "fdap" main effect (*p*-value < 2.2e-16) are significant at Alpha = 0.001 significance level. Hence, we would mention 2 different pairwise letter separation plots/tables/interpretation paragraphs: one for the 2-way "krate_kgha:nrate_kgha" interaction, and another plot/table/interpretation paragraph for the "fdap" main effect (because both "krate_kgha:nrate_kgha" and "fdap"  were significant at Alpha = 0.001 significance level).  
 
 
-In contrast, the "mod3_gen" i.e., general model had the 3-way "krate_kgha:nrate_kgha:fdap" interaction (*p*-value = 7.576e-05) to be highly significant at Alpha = 0.001 significance level. Hence, we would extract means and mention pairwise letter separation plots/tables/interpretation paragraphs either to compare different days after planting (fdap) within all combinations of nitrogen rate and potassium rates, or to compare all combinations of nitrogen and potassium rates within each day after planting (fdap) -- depending on our research question/interest.
+In contrast, the "mod3_gen" i.e., general model had the 3-way "krate_kgha:nrate_kgha:fdap" interaction (*p*-value = 7.576e-05) to be highly significant at Alpha = 0.001 significance level. Hence, we would extract means and mention pairwise letter separation plots/tables/interpretation paragraphs either to compare different days after planting (fdap) within all combinations of nitrogen rate and potassium rates, or to compare all combinations of nitrogen and potassium rates within each day after planting (fdap) -- depending on our research question/interest.  
 
 # Submitting your work  
 Once you have developed all the code and answers, make sure to Render this quarto file.  
